@@ -1,0 +1,40 @@
+cc     = gcc
+ccflags = -Wall -fPIC -lstdc++
+cclinkerflags_shared = -shared -Wl,-z,now
+cclinkerflags = -lstdc++
+
+rule compile
+  command = $cc $ccflags -c $in -o $out
+
+rule link_shared
+  command = $cc $cclinkerflags_shared --verbose -o $out $in
+
+rule link_exec
+  command = $cc $cclinkerflags_shared -pie --verbose -lstdc++ -o $out $in
+
+rule link
+  command = mkdir -p $$(dirname $out) && $cc $cclinkerflags $in -o $out -v
+
+rule static_library
+  command = /usr/bin/ar rcs $out $in
+
+build obj/fun_a.o: compile fun_a.cxx
+build obj/fun_b.o: compile fun_b.cxx
+build obj/fun_c.o: compile fun_c.cxx
+build obj/call_fun_c.o: compile call_fun_c.cxx
+
+build lib/libfun_a.so: link_shared obj/fun_a.o
+build lib/libfun_b.so: link_shared obj/fun_b.o
+build lib/libfun_c.so: link_shared obj/fun_c.o
+build lib/libcall_fun_c.so: link_shared obj/call_fun_c.o
+
+build lib/fun_a.a: static_library obj/fun_a.o
+build lib/fun_c.a: static_library obj/fun_c.o
+build lib/call_fun_c.a: static_library obj/call_fun_c.o
+
+build out/hello: link lib/call_fun_c.a lib/fun_c.a libfun_b.a lib/fun_a.a
+build out/hello_shared: link_exec lib/libcall_fun_c.so lib/libfun_c.so libfun_b_so.so lib/libfun_a.so
+
+build out/hello_shared_ninja: link_exec lib/libcall_fun_c.so lib/libfun_c.so lib/libfun_b.so lib/libfun_a.so
+
+default out/hello

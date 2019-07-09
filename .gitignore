@@ -1,0 +1,6 @@
+bazel-*
+.idea/
+lib/
+obj/
+out/
+.ninja_*
